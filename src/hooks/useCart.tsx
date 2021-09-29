@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useContext, useState } from "react";
 import { toast } from "react-toastify";
 import { api } from "../services/api";
-import { Product, Stock } from "../types";
+import { Product } from "../types";
 
 interface CartProviderProps {
   children: ReactNode;
@@ -46,7 +46,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         if (response.data) {
           if (!cartExists(response.data.id)) {
             setCart([...cart, { ...response.data, amount: 1 }]);
-            // localStorage.setItem("@RocketShoes:cart", JSON.stringify(cart));
+            localStorage.setItem("@RocketShoes:cart", JSON.stringify(cart));
           } else {
             // let newCart = [...cart];
             // cart.map((product, index) => {
@@ -64,6 +64,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
               }
             });
             setCart(newCart);
+            localStorage.setItem("@RocketShoes:cart", JSON.stringify(cart));
           }
         }
       });
@@ -78,8 +79,9 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         return product.id !== productId;
       });
       setCart(newCart);
+      localStorage.setItem("@RocketShoes:cart", JSON.stringify(cart));
     } catch {
-      // TODO
+      toast.error("Erro na remoção do produto");
     }
   };
 
