@@ -39,23 +39,39 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     });
   }
 
+  async function stockSupply(id: number, amount: number) {
+    let result = await api.get(`/stock/${id}`).then((response) => {
+      if (response.data) {
+        if (response.data.amount < 1 || amount < 1) {
+          return false;
+        }
+        if (amount <= response.data.amount) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    });
+    return result;
+  }
+
   const addProduct = async (productId: number) => {
-    const storagedCart = localStorage.getItem("@RocketShoes:cart");
     try {
-      api.get(`/products/${productId}`).then((response) => {
+      //verificar estoque
+      await api.get(`/products/${productId}`).then(async (response) => {
         if (response.data) {
+          const supply = await stockSupply(productId, response.data.amount);
+          if (supply) {
+          } else {
+            toast.error("Quantidade solicitada fora de estoque");
+            return;
+          }
           if (!cartExists(response.data.id)) {
             setCart([...cart, { ...response.data, amount: 1 }]);
             localStorage.setItem("@RocketShoes:cart", JSON.stringify(cart));
           } else {
-            // let newCart = [...cart];
-            // cart.map((product, index) => {
-            //   if (product.id === response.data.id) {
-            //     newCart[index].amount += 1;
-            //   }
-            // });
-            // setCart(newCart);
-
             const newCart = cart.map((product) => {
               if (product.id === response.data.id) {
                 return { ...product, amount: (product.amount += 1) };
@@ -66,20 +82,27 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
             setCart(newCart);
             localStorage.setItem("@RocketShoes:cart", JSON.stringify(cart));
           }
+        } else {
+          toast.error("Erro na adição do produto");
         }
       });
-    } catch {
+    } catch (error) {
+      toast.error("Erro na adição do produto");
       // TODO
     }
   };
 
   const removeProduct = (productId: number) => {
     try {
-      const newCart = cart.filter((product: Product) => {
-        return product.id !== productId;
-      });
-      setCart(newCart);
-      localStorage.setItem("@RocketShoes:cart", JSON.stringify(cart));
+      if (cartExists(productId)) {
+        const newCart = cart.filter((product: Product) => {
+          return product.id !== productId;
+        });
+        setCart(newCart);
+        localStorage.setItem("@RocketShoes:cart", JSON.stringify(cart));
+      } else {
+        toast.error("Erro na remoção do produto");
+      }
     } catch {
       toast.error("Erro na remoção do produto");
     }
@@ -90,9 +113,36 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     amount,
   }: UpdateProductAmount) => {
     try {
-      // TODO
+      const supply = await stockSupply(productId, amount);
+      if (amount <= 0) {
+        toast.error("Quantidade solicitada fora de estoque");
+        return;
+      }
+      if (!supply) {
+        toast.error("Quantidade solicitada fora de estoque");
+      }
+      if (cartExists(productId)) {
+        if (supply) {
+          const updateCart = cart.map((product) => {
+            if (productId === product.id) {
+              console.log({ ...product, amount });
+              return { ...product, amount };
+            } else {
+              return product;
+            }
+          });
+          setCart(updateCart);
+          localStorage.setItem("@RocketShoes:cart", JSON.stringify(cart));
+        } else {
+          toast.error("Quantidade solicitada fora de estoque");
+          return;
+        }
+      } else {
+        toast.error("Erro na alteração de quantidade do produto");
+        return;
+      }
     } catch {
-      // TODO
+      toast.error("Erro na alteração de quantidade do produto");
     }
   };
 
