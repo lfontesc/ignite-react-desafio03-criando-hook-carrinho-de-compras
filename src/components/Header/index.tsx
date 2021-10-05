@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { MdShoppingBasket } from "react-icons/md";
 import { Link } from "react-router-dom";
 import logo from "../../assets/images/logo.svg";
@@ -10,12 +10,6 @@ const Header = (): JSX.Element => {
   const cartSize = cart.filter(
     (cart, index, carts) => carts.indexOf(cart) === index
   ).length;
-
-  // console.log("CART->", cart);
-
-  useEffect(() => {
-    // console.log("CARxxxxT->", cartSize);
-  }, [cart]);
 
   return (
     <Container>
